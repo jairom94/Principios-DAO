@@ -1,4 +1,6 @@
 from abc import ABC
+from enum import Enum
+import requests
 
 class Model(ABC):
     fields:list = []
@@ -93,3 +95,84 @@ class Film(Model):
     
     def __str__(self):
         return self.__repr__()
+
+class Argumentos(Enum):
+    ID = ('i','optional')
+    TITLE = ('t','optional')
+    TYPE = ('type','no')
+    SEARCH = ('s','required')
+    PAGE = ('page','no')
+    RETORNO = ('r','no')
+
+class Ombd:
+    endpoint = 'http://www.omdbapi.com/'
+    
+    def __init__(self,apikey:str)->None:        
+        self.apikey=apikey
+        self.action = None
+
+    args_valor = tuple[Argumentos,str]
+    def run_query(self,argumentos:list[args_valor])->list|dict:
+        response = {}
+        if self.apikey:
+            url = f'{self.endpoint}?apikey={self.apikey}'
+            params_url = '&'
+            for arg,value in argumentos:
+                arg_simbol,required = arg.value
+                params_url += f'{arg_simbol}={value}&'
+            if params_url != '&':
+                url += params_url
+            data = requests.get(url)
+            response = data.json()
+
+        return response
+    
+class Consultor:
+    __apikey = '607ecd0e' 
+    #fields = ['titulo','anio','id','imdbID','director','poster']
+    fields = {
+        'titulo':'Title',
+        'anio':'Year',
+        'imdbID':'imdbID',
+        'poster':'Poster'
+    }
+    
+    def __init__(self,titulo:str=''):
+        self.__titulo = titulo
+        self.__ombd = Ombd(self.__apikey)
+        self.peliculas:list[Film] = []  
+        self.__settings = [
+            (Argumentos.RETORNO,'json'),
+            (Argumentos.TYPE,'movie')
+        ]
+        self.response:str = 'False'
+        # self.response:dict = {}
+    @property
+    def titulo(self):
+        return self.__titulo
+    
+    @titulo.setter
+    def titulo(self,value):
+        self.__titulo = value
+
+    def consultar(self):        
+        #fields = ['titulo','anio','id','imdbID','director','poster']
+        search = (Argumentos.SEARCH,self.titulo)
+        self.__settings.append(search)
+        response = self.__ombd.run_query(self.__settings)
+        if response.get('Response') == 'True':
+            self.response = 'True'
+            pelis:list[dict] = response.get('Search')
+            for peli in pelis:
+                peli_encontrada = {f'{field}':peli[f'{self.fields[f'{field}']}'] for field in Film.fields if field in self.fields}
+                peli_encontrada['director'] = 'Anonimo'
+                peli_encontrada['id'] = 0
+                film = Film(**peli_encontrada)
+                self.peliculas.append(film)
+        # return response   
+    
+    def pelicula_seleccionada(self,titulo:str):
+        buscando = next((peli for peli in self.peliculas if peli.titulo == titulo),None)
+        return buscando
+
+        
