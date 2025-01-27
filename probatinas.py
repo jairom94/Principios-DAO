@@ -2,7 +2,7 @@
 # from http import HTTPStatus
 
 
-# APIKEY = '607ecd0e'
+# APIKEY = ''
 # ENDPOINT = 'http://www.omdbapi.com/?apikey='
 # palabra = input('Nombre de la pelicula? ')
 # response = requests.get(f'{ENDPOINT}{APIKEY}&t={palabra}')

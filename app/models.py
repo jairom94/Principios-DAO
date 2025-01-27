@@ -1,6 +1,8 @@
 from abc import ABC
 from enum import Enum
 import requests
+import os
+from dotenv import load_dotenv
 
 class Model(ABC):
     fields:list = []
@@ -128,7 +130,6 @@ class Ombd:
         return response
     
 class Consultor:
-    __apikey = '607ecd0e' 
     #fields = ['titulo','anio','id','imdbID','director','poster']
     fields = {
         'titulo':'Title',
@@ -138,6 +139,8 @@ class Consultor:
     }
     
     def __init__(self,titulo:str=''):
+        load_dotenv()
+        self.__apikey = str(os.getenv("API_KEY"))
         self.__titulo = titulo
         self.__ombd = Ombd(self.__apikey)
         self.peliculas:list[Film] = []  
